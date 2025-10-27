@@ -622,7 +622,7 @@ var SwaggerInfo = &swag.Spec{
 	Version:          "1.0",
 	Host:             "localhost:8080",
 	BasePath:         "/api",
-	Schemes:          []string{"http"},
+	Schemes:          []string{"http", "https"},
 	Title:            "Go Expense Tracker API",
 	Description:      "RESTful API for managing expenses and categories",
 	InfoInstanceName: "swagger",

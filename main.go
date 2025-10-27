@@ -9,14 +9,14 @@ import (
 	ginSwagger "github.com/swaggo/gin-swagger"
 
 	DB "goExpenseTracker/config/DB"
+	swaggerConfig "goExpenseTracker/config/swagger"
+	docs "goExpenseTracker/docs"
 	"goExpenseTracker/internal/handlers"
 	Logger "goExpenseTracker/internal/middlewears"
 	"goExpenseTracker/internal/models"
 	"goExpenseTracker/internal/repositories"
 	"goExpenseTracker/internal/routes"
 	"goExpenseTracker/internal/services"
-
-	_ "goExpenseTracker/docs" // Swagger docs
 
 	"gorm.io/gorm"
 )
@@ -35,7 +35,7 @@ import (
 
 // @host localhost:8080
 // @BasePath /api
-// @schemes http
+// @schemes http https
 func main() {
 	app := bootstrapApp()
 	port := getPort()
@@ -64,8 +64,20 @@ func bootstrapApp() *gin.Engine {
 	router := gin.New()
 	router.Use(Logger.Logger(), gin.Recovery())
 
-	// Swagger setup
-	router.GET("/swagger/*any", ginSwagger.WrapHandler(swaggerFiles.Handler))
+	// Swagger setup with multiple server options
+	swaggerHost := os.Getenv("SWAGGER_HOST")
+	if swaggerHost != "" {
+		docs.SwaggerInfo.Host = swaggerHost
+	}
+
+	// Custom swagger.json endpoint with servers array (at /api level to avoid routing conflict)
+	router.GET("/api/swagger.json", swaggerConfig.CustomSwaggerHandler())
+
+	// Swagger UI - configure it to use our custom swagger.json
+	router.GET("/swagger/*any", ginSwagger.WrapHandler(
+		swaggerFiles.Handler,
+		ginSwagger.URL("/api/swagger.json"), // Point to our custom spec with multiple servers
+	))
 
 	// Mount routes
 	setupRoutes(router, categoryHandler, expenseHandler)
